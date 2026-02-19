@@ -4,6 +4,7 @@ import com.clinica.api.modelo.documento.PacienteDto;
 import com.clinica.api.servicio.PacienteServicio;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -17,37 +18,42 @@ public class PacienteControlador {
         this.servicio = servicio;
     }
 
-    // CREATE
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<PacienteDto> create(@RequestBody PacienteDto paciente) {
         return servicio.create(paciente);
     }
 
-    // READ ALL
     @GetMapping
     public Flux<PacienteDto> findAll() {
         return servicio.findAll();
     }
 
-    // READ BY ID
     @GetMapping("/{id}")
     public Mono<PacienteDto> findById(@PathVariable String id) {
-        return servicio.findById(id);
+        return servicio.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Paciente no encontrado con ID: " + id
+                )));
     }
 
-    // UPDATE
     @PutMapping("/{id}")
     public Mono<PacienteDto> update(
             @PathVariable String id,
             @RequestBody PacienteDto paciente) {
-        return servicio.update(id, paciente);
+        return servicio.update(id, paciente)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Paciente no encontrado con ID: " + id
+                )));
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> delete(@PathVariable String id) {
-        return servicio.delete(id);
+        return servicio.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Paciente no encontrado con ID: " + id
+                )))
+                .flatMap(p -> servicio.delete(id));
     }
 }
