@@ -1,15 +1,5 @@
-FROM maven:3-jdk-8-alpine as builder
-
-WORKDIR /usr/src/app
-
-COPY . /usr/src/app
-RUN mvn package
-
-FROM openjdk:8-jre-alpine
-
-COPY --from=builder /usr/src/app/target/*.jar /app.jar
-
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY target/clinic-api-1.0.0.jar app.jar
 EXPOSE 8080
-
-ENTRYPOINT ["java"]
-CMD ["-jar", "/app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]
