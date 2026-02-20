@@ -2,7 +2,9 @@ package com.clinica.api.servicio;
 
 import com.clinica.api.modelo.documento.PacienteDto;
 import com.clinica.api.repositorio.PacienteRepositorio;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -15,32 +17,37 @@ public class PacienteServicio {
         this.repositorio = repositorio;
     }
 
-    // CREATE
     public Mono<PacienteDto> create(PacienteDto paciente) {
         return repositorio.save(paciente);
     }
 
-    // READ ALL
     public Flux<PacienteDto> findAll() {
         return repositorio.findAll();
     }
 
-    // READ BY ID
     public Mono<PacienteDto> findById(String id) {
-        return repositorio.findById(id);
+        return repositorio.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Paciente no encontrado con ID: " + id
+                )));
     }
 
-    // UPDATE
     public Mono<PacienteDto> update(String id, PacienteDto paciente) {
         return repositorio.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Paciente no encontrado con ID: " + id
+                )))
                 .flatMap(existing -> {
                     paciente.setId(existing.getId());
                     return repositorio.save(paciente);
                 });
     }
 
-    // DELETE
     public Mono<Void> delete(String id) {
-        return repositorio.deleteById(id);
+        return repositorio.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Paciente no encontrado con ID: " + id
+                )))
+                .flatMap(paciente -> repositorio.deleteById(paciente.getId()));
     }
 }
