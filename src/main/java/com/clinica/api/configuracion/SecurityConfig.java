@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 public class SecurityConfig {
 
     private final UsuarioDetallesServicio detallesServicio;
-    private final JwtUtil jwtUtil; // ← inyectamos JwtUtil para construir el filtro manualmente
+    private final JwtUtil jwtUtil;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -34,23 +34,23 @@ public class SecurityConfig {
     }
 
     @Bean
-    public ReactiveAuthenticationManager authenticationManager() {
-        UserDetailsRepositoryReactiveAuthenticationManager manager =
-                new UserDetailsRepositoryReactiveAuthenticationManager(detallesServicio);
-        manager.setPasswordEncoder(passwordEncoder());
-        return manager;
-    }
-
-    @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
-        // Instanciamos el filtro manualmente — así Spring NO lo registra como WebFilter global
+        // AuthenticationManager local — NO expuesto como @Bean global
+        ReactiveAuthenticationManager authManager =
+                new UserDetailsRepositoryReactiveAuthenticationManager(detallesServicio);
+        ((UserDetailsRepositoryReactiveAuthenticationManager) authManager)
+                .setPasswordEncoder(passwordEncoder());
+
+        // JwtFiltro instanciado manualmente — NO registrado como WebFilter global
         JwtFiltro jwtFiltro = new JwtFiltro(jwtUtil, detallesServicio);
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                // Vinculamos el authManager explícitamente al chain
+                .authenticationManager(authManager)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(
                                 new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
