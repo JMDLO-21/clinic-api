@@ -20,7 +20,6 @@ public class JwtFiltro implements WebFilter {
     private final JwtUtil jwtUtil;
     private final UsuarioDetallesServicio detallesServicio;
 
-    // Rutas que el filtro debe ignorar completamente
     private static final List<String> RUTAS_PUBLICAS = List.of(
             "/api/auth/",
             "/v3/api-docs",
@@ -30,18 +29,24 @@ public class JwtFiltro implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        String path = request.getURI().getPath();
+        String path = exchange.getRequest().getURI().getPath();
 
-        // Si la ruta es pública, el filtro no toca nada y sigue la cadena
-        boolean esRutaPublica = RUTAS_PUBLICAS.stream()
-                .anyMatch(path::startsWith);
+        System.out.println("==========================================");
+        System.out.println(">>> FILTRO JWT - path: " + path);
+
+        boolean esRutaPublica = RUTAS_PUBLICAS.stream().anyMatch(path::startsWith);
+        System.out.println(">>> ¿Es ruta pública? " + esRutaPublica);
+        System.out.println("==========================================");
 
         if (esRutaPublica) {
             return chain.filter(exchange);
         }
 
-        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        String authHeader = exchange.getRequest()
+                .getHeaders()
+                .getFirst(HttpHeaders.AUTHORIZATION);
+
+        System.out.println(">>> Authorization header: " + authHeader);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return chain.filter(exchange);
@@ -50,10 +55,12 @@ public class JwtFiltro implements WebFilter {
         String token = authHeader.substring(7);
 
         if (!jwtUtil.esValido(token)) {
+            System.out.println(">>> Token inválido");
             return chain.filter(exchange);
         }
 
         String username = jwtUtil.obtenerUsername(token);
+        System.out.println(">>> Username extraído del token: " + username);
 
         return detallesServicio.findByUsername(username)
                 .map(userDetails -> new UsernamePasswordAuthenticationToken(

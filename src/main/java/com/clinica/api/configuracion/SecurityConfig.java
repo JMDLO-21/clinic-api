@@ -10,7 +10,6 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -63,8 +62,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyExchange().authenticated()
                 )
-                // IMPORTANTE: el filtro JWT va DESPUÉS de que Spring evalúa el permitAll
-                .addFilterAfter(jwtFiltro, SecurityWebFiltersOrder.AUTHENTICATION)
+                // ← addFilterAt eliminado temporalmente para diagnóstico
                 .build();
     }
 }
