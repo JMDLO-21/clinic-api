@@ -1,6 +1,7 @@
 package com.clinica.api.configuracion;
 
 import com.clinica.api.seguridad.JwtFiltro;
+import com.clinica.api.seguridad.JwtUtil;
 import com.clinica.api.seguridad.UsuarioDetallesServicio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +11,7 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +26,7 @@ import reactor.core.publisher.Mono;
 public class SecurityConfig {
 
     private final UsuarioDetallesServicio detallesServicio;
-    private final JwtFiltro jwtFiltro;
+    private final JwtUtil jwtUtil; // ← inyectamos JwtUtil para construir el filtro manualmente
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,6 +43,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+
+        // Instanciamos el filtro manualmente — así Spring NO lo registra como WebFilter global
+        JwtFiltro jwtFiltro = new JwtFiltro(jwtUtil, detallesServicio);
+
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -62,7 +68,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyExchange().authenticated()
                 )
-                // ← addFilterAt eliminado temporalmente para diagnóstico
+                .addFilterAt(jwtFiltro, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 }
