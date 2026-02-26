@@ -39,12 +39,24 @@ public class AuthControlador {
                         HttpStatus.UNAUTHORIZED, "Credenciales inválidas")))
                 .flatMap(usuario -> {
 
+                    // ── LOGS DE DIAGNÓSTICO ──────────────────────────────────
+                    System.out.println("=== DEBUG LOGIN ===");
+                    System.out.println("Usuario encontrado : " + usuario.getUsername());
+                    System.out.println("Activo             : " + usuario.isActivo());
+                    System.out.println("Password recibido  : " + request.getPassword());
+                    System.out.println("Hash en BD         : [" + usuario.getPassword() + "]");
+                    System.out.println("Hash length        : " + (usuario.getPassword() != null ? usuario.getPassword().length() : "null"));
+                    boolean match = passwordEncoder.matches(request.getPassword(), usuario.getPassword());
+                    System.out.println("matches()          : " + match);
+                    System.out.println("===================");
+                    // ────────────────────────────────────────────────────────
+
                     if (!usuario.isActivo()) {
                         return Mono.error(new ResponseStatusException(
                                 HttpStatus.UNAUTHORIZED, "Usuario inactivo, contacta al administrador"));
                     }
 
-                    if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+                    if (!match) {
                         return Mono.error(new ResponseStatusException(
                                 HttpStatus.UNAUTHORIZED, "Credenciales inválidas"));
                     }
@@ -66,4 +78,14 @@ public class AuthControlador {
                     ));
                 });
     }
+
+    // ── ENDPOINT TEMPORAL para generar hash correcto ──────────────────────────
+    // Llama GET http://localhost:8080/api/auth/hash?password=admin123
+    // Copia el resultado y actualízalo en MongoDB
+    // ELIMINA este endpoint antes de ir a producción
+    @GetMapping("/hash")
+    public Mono<String> generarHash(@RequestParam String password) {
+        return Mono.just(passwordEncoder.encode(password));
+    }
 }
+
