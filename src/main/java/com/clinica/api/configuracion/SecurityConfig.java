@@ -5,7 +5,6 @@ import com.clinica.api.seguridad.UsuarioDetallesServicio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
@@ -55,15 +54,17 @@ public class SecurityConfig {
                                         exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN)))
                 )
                 .authorizeExchange(auth -> auth
-                        // Público: login
-                        .pathMatchers("/api/auth/**").permitAll()
-                        // Swagger / OpenAPI
-                        .pathMatchers("/v3/api-docs/**", "/swagger-ui/**",
-                                "/swagger-ui.html", "/webjars/**").permitAll()
-                        // El resto requiere autenticación (los roles se controlan con @PreAuthorize)
+                        .pathMatchers(
+                                "/api/auth/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/webjars/**"
+                        ).permitAll()
                         .anyExchange().authenticated()
                 )
-                .addFilterAt(jwtFiltro, SecurityWebFiltersOrder.AUTHENTICATION)
+                // IMPORTANTE: el filtro JWT va DESPUÉS de que Spring evalúa el permitAll
+                .addFilterAfter(jwtFiltro, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 }
