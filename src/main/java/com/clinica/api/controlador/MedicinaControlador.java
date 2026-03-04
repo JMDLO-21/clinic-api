@@ -26,34 +26,34 @@ public class MedicinaControlador {
         return servicio.crear(request);
     }
 
-    // MEDICO y ENFERMERO pueden ver el catálogo disponible
+    // MEDICO, ENFERMERO y COORDINADOR pueden ver el catálogo disponible
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Flux<MedicinaDto> findAll() {
         return servicio.findAll();
     }
 
     @GetMapping("/activos")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Flux<MedicinaDto> findActivos() {
         return servicio.findActivos();
     }
 
     @GetMapping("/con-stock")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Flux<MedicinaDto> findConStock() {
         return servicio.findConStock();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Mono<MedicinaDto> findById(@PathVariable String id) {
         return servicio.findById(id);
     }
 
     // Buscar por principio activo: /api/medicinas/buscar?principio=ibuprofeno
     @GetMapping("/buscar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Flux<MedicinaDto> buscarPorPrincipioActivo(@RequestParam String principio) {
         return servicio.buscarPorPrincipioActivo(principio);
     }

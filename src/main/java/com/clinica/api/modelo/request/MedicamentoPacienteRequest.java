@@ -14,9 +14,6 @@ public class MedicamentoPacienteRequest {
     @NotBlank(message = "El ID del paciente es obligatorio")
     private String pacienteId;
 
-    @NotBlank(message = "El ID del enfermero responsable es obligatorio")
-    private String enfermeroId;
-
     @NotBlank(message = "El ID del medicamento es obligatorio")
     private String medicinaId;
 
@@ -26,13 +23,12 @@ public class MedicamentoPacienteRequest {
     @NotBlank(message = "La frecuencia es obligatoria (ej: 'Cada 8 horas')")
     private String frecuencia;
 
-    @NotEmpty(message = "Debe indicar al menos un horario de administración (ej: ['08:00','16:00'])")
-    private List<String> horariosAdministracion;
+    @NotEmpty(message = "Debe indicar al menos un horario (ej: ['08:00','16:00'])")
+    private List<String> horarios; // solo los horarios, ej: ["08:00", "16:00", "00:00"]
 
     @NotNull(message = "La fecha de inicio es obligatoria")
     private LocalDateTime fechaInicio;
 
     private LocalDateTime fechaFin;
-
     private String indicaciones;
 }

@@ -1,6 +1,7 @@
 package com.clinica.api.controlador;
 
 import com.clinica.api.modelo.documento.MedicamentoPacienteDto;
+import com.clinica.api.modelo.request.AdministrarMedicamentoRequest;
 import com.clinica.api.modelo.request.MedicamentoPacienteRequest;
 import com.clinica.api.seguridad.UsuarioAutenticado;
 import com.clinica.api.servicio.MedicamentoPacienteServicio;
@@ -22,7 +23,7 @@ public class MedicamentoPacienteControlador {
     private final MedicamentoPacienteServicio servicio;
     private final UsuarioAutenticado usuarioAutenticado;
 
-    // Solo MEDICO prescribe — el medicoId sale del token JWT
+    // Solo MEDICO prescribe
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MEDICO')")
@@ -33,48 +34,57 @@ public class MedicamentoPacienteControlador {
                 .flatMap(medicoId -> servicio.prescribir(medicoId, request));
     }
 
-    // ADMIN y MEDICO ven todas las prescripciones
+    // ENFERMERO marca que ya administró una toma específica
+    // PATCH /api/medicamentos-paciente/{id}/administrar
+    @PatchMapping("/{id}/administrar")
+    @PreAuthorize("hasRole('ENFERMERO')")
+    public Mono<MedicamentoPacienteDto> administrar(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody AdministrarMedicamentoRequest request) {
+        return usuarioAutenticado.obtenerIdDesdeUsername(userDetails.getUsername())
+                .flatMap(enfermeroId -> servicio.administrar(id, enfermeroId, request));
+    }
+
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'COORDINADOR')")
     public Flux<MedicamentoPacienteDto> findAll() {
         return servicio.findAll();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Mono<MedicamentoPacienteDto> findById(@PathVariable String id) {
         return servicio.findById(id);
     }
 
-    // Medicamentos de un paciente
     @GetMapping("/paciente/{pacienteId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
     public Flux<MedicamentoPacienteDto> findByPaciente(@PathVariable String pacienteId) {
         return servicio.findByPaciente(pacienteId);
     }
 
-    // Solo medicamentos ACTIVOS de un paciente (lo que debe administrarse ahora)
     @GetMapping("/paciente/{pacienteId}/activos")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
-    public Flux<MedicamentoPacienteDto> findByPacienteActivos(@PathVariable String pacienteId) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    public Flux<MedicamentoPacienteDto> findByPacienteActivos(
+            @PathVariable String pacienteId) {
         return servicio.findByPacienteActivos(pacienteId);
     }
 
-    // Enfermero ve todos los medicamentos activos que debe administrar
-    @GetMapping("/enfermero/{enfermeroId}/activos")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
-    public Flux<MedicamentoPacienteDto> findByEnfermeroActivos(@PathVariable String enfermeroId) {
-        return servicio.findByEnfermeroActivos(enfermeroId);
+    // Tomas que aún no se han administrado de un paciente
+    @GetMapping("/paciente/{pacienteId}/pendientes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    public Flux<MedicamentoPacienteDto> findPendientesPorPaciente(
+            @PathVariable String pacienteId) {
+        return servicio.findPendientesPorPaciente(pacienteId);
     }
 
-    // Prescripciones hechas por un médico específico
     @GetMapping("/medico/{medicoId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'COORDINADOR')")
     public Flux<MedicamentoPacienteDto> findByMedico(@PathVariable String medicoId) {
         return servicio.findByMedico(medicoId);
     }
 
-    // Cambiar estado: ACTIVO → SUSPENDIDO o COMPLETADO (solo MEDICO o ADMIN)
     @PatchMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
     public Mono<MedicamentoPacienteDto> cambiarEstado(

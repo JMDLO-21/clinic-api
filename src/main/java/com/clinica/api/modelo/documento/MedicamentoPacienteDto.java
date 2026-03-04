@@ -21,29 +21,45 @@ public class MedicamentoPacienteDto {
     private String pacienteId;
     private String pacienteNombre;
 
-    // Médico que prescribió el tratamiento
+    // Médico que prescribió
     private String medicoId;
     private String medicoNombre;
-
-    // Enfermero responsable de administrar
-    private String enfermeroId;
-    private String enfermeroNombre;
 
     // Medicina del catálogo
     private String medicinaId;
     private String medicinaNombre;
 
     // Detalles del tratamiento
-    private String dosis;                        // Ej: "1 tableta", "500mg"
-    private String frecuencia;                   // Ej: "Cada 8 horas"
-    private List<String> horariosAdministracion; // Ej: ["08:00", "16:00", "00:00"]
+    private String dosis;
+    private String frecuencia;
+
+    // Lista de administraciones programadas
+    // Cada una tiene su horario y su estado individual
+    private List<AdministracionDto> administraciones;
 
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
 
-    private String indicaciones;  // Notas adicionales del médico
-    private String estado;        // ACTIVO | SUSPENDIDO | COMPLETADO
+    private String indicaciones;
+    private String estado; // ACTIVO | SUSPENDIDO | COMPLETADO
 
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
+
+    // ── Subdocumento: cada toma programada ──────────────────────────────────
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AdministracionDto {
+
+        private String horario;          // "08:00", "16:00", "00:00"
+
+        // Se llena cuando el enfermero marca que ya lo colocó
+        private boolean administrado;
+        private String enfermeroId;      // quién lo colocó
+        private String enfermeroNombre;
+        private LocalDateTime fechaAdministracion; // cuándo exactamente lo colocó
+        private String observaciones;    // nota opcional del enfermero
+    }
 }
