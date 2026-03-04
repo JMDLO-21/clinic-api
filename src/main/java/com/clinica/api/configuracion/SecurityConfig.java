@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 
 @Configuration
 @EnableWebFluxSecurity
-@EnableReactiveMethodSecurity
+@EnableReactiveMethodSecurity(useAuthorizationManager = true)  // ← cambio clave
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -36,27 +36,25 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
-        // AuthenticationManager local — NO expuesto como @Bean global
         ReactiveAuthenticationManager authManager =
                 new UserDetailsRepositoryReactiveAuthenticationManager(detallesServicio);
         ((UserDetailsRepositoryReactiveAuthenticationManager) authManager)
                 .setPasswordEncoder(passwordEncoder());
 
-        // JwtFiltro instanciado manualmente — NO registrado como WebFilter global
         JwtFiltro jwtFiltro = new JwtFiltro(jwtUtil, detallesServicio);
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-                // Vinculamos el authManager explícitamente al chain
                 .authenticationManager(authManager)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(
                                 new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
                         .accessDeniedHandler((exchange, denied) ->
                                 Mono.fromRunnable(() ->
-                                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN)))
+                                        exchange.getResponse()
+                                                .setStatusCode(HttpStatus.FORBIDDEN)))
                 )
                 .authorizeExchange(auth -> auth
                         .pathMatchers(
