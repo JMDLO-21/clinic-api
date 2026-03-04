@@ -22,6 +22,8 @@ public class UsuarioDetalles implements UserDetails {
         this.password = usuario.getPassword();
         this.activo = usuario.isActivo();
         this.authorities = List.of(
+                // ROLE_ es el prefijo que Spring Security exige
+                // sin este prefijo @PreAuthorize("hasRole('COORDINADOR')") nunca funciona
                 new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())
         );
     }
@@ -32,7 +34,7 @@ public class UsuarioDetalles implements UserDetails {
     @Override public String getPassword()  { return password; }
     @Override public String getUsername()  { return username; }
     @Override public boolean isEnabled()   { return activo; }
-    @Override public boolean isAccountNonExpired()   { return true; }
-    @Override public boolean isAccountNonLocked()    { return true; }
+    @Override public boolean isAccountNonExpired()     { return true; }
+    @Override public boolean isAccountNonLocked()      { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
 }
