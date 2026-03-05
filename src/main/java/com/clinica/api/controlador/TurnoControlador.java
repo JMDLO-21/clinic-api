@@ -21,53 +21,48 @@ public class TurnoControlador {
 
     private final TurnoServicio servicio;
 
-    // ── Solo ADMIN asigna / modifica turnos ──────────────────────────────────
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<TurnoDto> crear(@Valid @RequestBody TurnoRequest request) {
         return servicio.crearTurno(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Flux<TurnoDto> findAll() {
         return servicio.findAll();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Mono<TurnoDto> findById(@PathVariable String id) {
         return servicio.findById(id);
     }
 
-    // Médicos y enfermeros consultan sus propios turnos
     @GetMapping("/usuario/{usuarioId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<TurnoDto> findByUsuario(@PathVariable String usuarioId) {
         return servicio.findByUsuario(usuarioId);
     }
 
-    // Turnos de un día específico: /api/turnos/fecha/2024-04-15
     @GetMapping("/fecha/{fecha}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<TurnoDto> findByFecha(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         return servicio.findByFecha(fecha);
     }
 
-    // Rango de fechas: /api/turnos/rango?inicio=2024-04-01&fin=2024-04-30
     @GetMapping("/rango")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<TurnoDto> findByRango(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
         return servicio.findByRango(inicio, fin);
     }
 
-    // Turnos de un usuario en un rango: /api/turnos/usuario/{id}/rango?inicio=...&fin=...
     @GetMapping("/usuario/{usuarioId}/rango")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<TurnoDto> findByUsuarioYRango(
             @PathVariable String usuarioId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
@@ -76,7 +71,7 @@ public class TurnoControlador {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<TurnoDto> actualizar(
             @PathVariable String id,
             @Valid @RequestBody TurnoRequest request) {
@@ -84,14 +79,14 @@ public class TurnoControlador {
     }
 
     @PatchMapping("/{id}/cancelar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<TurnoDto> cancelar(@PathVariable String id) {
         return servicio.cancelar(id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<Void> eliminar(@PathVariable String id) {
         return servicio.eliminar(id);
     }

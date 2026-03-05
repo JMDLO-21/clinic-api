@@ -24,12 +24,11 @@ public class UsuarioControlador {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<UsuarioDto> crear(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UsuarioRequest request) {
 
-        // Si quien crea es COORDINADOR, solo puede crear MEDICO y ENFERMERO
         boolean esCoordinador = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_COORDINADOR"));
 
@@ -45,33 +44,31 @@ public class UsuarioControlador {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<UsuarioDto> findAll() {
         return servicio.findAll();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Mono<UsuarioDto> findById(@PathVariable String id) {
         return servicio.findById(id);
     }
 
     @GetMapping("/rol/{rol}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<UsuarioDto> findByRol(@PathVariable Rol rol) {
         return servicio.findByRol(rol);
     }
 
     @GetMapping("/activos")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'MEDICO', 'ENFERMERO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<UsuarioDto> findActivos() {
         return servicio.findActivos();
     }
 
-    // Solo ADMIN puede actualizar, desactivar y eliminar cualquier usuario
-    // COORDINADOR puede actualizar solo MEDICO y ENFERMERO
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<UsuarioDto> actualizar(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String id,
@@ -81,11 +78,9 @@ public class UsuarioControlador {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_COORDINADOR"));
 
         if (esCoordinador) {
-            // Verificar que el usuario a modificar no sea ADMIN ni COORDINADOR
             return servicio.findById(id)
                     .flatMap(usuario -> {
-                        if (usuario.getRol() == Rol.ADMIN
-                                || usuario.getRol() == Rol.COORDINADOR) {
+                        if (usuario.getRol() == Rol.ADMIN || usuario.getRol() == Rol.COORDINADOR) {
                             return Mono.error(new ResponseStatusException(
                                     HttpStatus.FORBIDDEN,
                                     "Un COORDINADOR no puede modificar ADMIN ni COORDINADOR"));
@@ -98,7 +93,7 @@ public class UsuarioControlador {
     }
 
     @PatchMapping("/{id}/desactivar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<UsuarioDto> desactivar(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String id) {
@@ -109,8 +104,7 @@ public class UsuarioControlador {
         if (esCoordinador) {
             return servicio.findById(id)
                     .flatMap(usuario -> {
-                        if (usuario.getRol() == Rol.ADMIN
-                                || usuario.getRol() == Rol.COORDINADOR) {
+                        if (usuario.getRol() == Rol.ADMIN || usuario.getRol() == Rol.COORDINADOR) {
                             return Mono.error(new ResponseStatusException(
                                     HttpStatus.FORBIDDEN,
                                     "Un COORDINADOR no puede desactivar ADMIN ni COORDINADOR"));
@@ -123,7 +117,7 @@ public class UsuarioControlador {
     }
 
     @PatchMapping("/{id}/activar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR')")
     public Mono<UsuarioDto> activar(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String id) {
@@ -134,8 +128,7 @@ public class UsuarioControlador {
         if (esCoordinador) {
             return servicio.findById(id)
                     .flatMap(usuario -> {
-                        if (usuario.getRol() == Rol.ADMIN
-                                || usuario.getRol() == Rol.COORDINADOR) {
+                        if (usuario.getRol() == Rol.ADMIN || usuario.getRol() == Rol.COORDINADOR) {
                             return Mono.error(new ResponseStatusException(
                                     HttpStatus.FORBIDDEN,
                                     "Un COORDINADOR no puede activar ADMIN ni COORDINADOR"));
@@ -147,10 +140,9 @@ public class UsuarioControlador {
         return servicio.activar(id);
     }
 
-    // Solo ADMIN puede eliminar usuarios
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Mono<Void> eliminar(@PathVariable String id) {
         return servicio.eliminar(id);
     }

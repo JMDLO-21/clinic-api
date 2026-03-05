@@ -18,48 +18,45 @@ public class MedicinaControlador {
 
     private final MedicinaServicio servicio;
 
-    // ADMIN gestiona el catálogo de medicamentos
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Mono<MedicinaDto> crear(@Valid @RequestBody MedicinaRequest request) {
         return servicio.crear(request);
     }
 
-    // MEDICO, ENFERMERO y COORDINADOR pueden ver el catálogo disponible
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<MedicinaDto> findAll() {
         return servicio.findAll();
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
+    public Mono<MedicinaDto> findById(@PathVariable String id) {
+        return servicio.findById(id);
+    }
+
     @GetMapping("/activos")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<MedicinaDto> findActivos() {
         return servicio.findActivos();
     }
 
     @GetMapping("/con-stock")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
     public Flux<MedicinaDto> findConStock() {
         return servicio.findConStock();
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
-    public Mono<MedicinaDto> findById(@PathVariable String id) {
-        return servicio.findById(id);
-    }
-
-    // Buscar por principio activo: /api/medicinas/buscar?principio=ibuprofeno
     @GetMapping("/buscar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
-    public Flux<MedicinaDto> buscarPorPrincipioActivo(@RequestParam String principio) {
-        return servicio.buscarPorPrincipioActivo(principio);
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COORDINADOR', 'ROLE_MEDICO', 'ROLE_ENFERMERO')")
+    public Flux<MedicinaDto> buscarPorPrincipioActivo(@RequestParam String principioActivo) {
+        return servicio.buscarPorPrincipioActivo(principioActivo);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Mono<MedicinaDto> actualizar(
             @PathVariable String id,
             @Valid @RequestBody MedicinaRequest request) {
@@ -67,14 +64,14 @@ public class MedicinaControlador {
     }
 
     @PatchMapping("/{id}/desactivar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Mono<MedicinaDto> desactivar(@PathVariable String id) {
         return servicio.desactivar(id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Mono<Void> eliminar(@PathVariable String id) {
         return servicio.eliminar(id);
     }

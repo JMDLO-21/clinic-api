@@ -23,10 +23,9 @@ public class MedicamentoPacienteControlador {
     private final MedicamentoPacienteServicio servicio;
     private final UsuarioAutenticado usuarioAutenticado;
 
-    // Solo MEDICO prescribe
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('MEDICO')")
+    @PreAuthorize("hasAuthority('ROLE_MEDICO')")
     public Mono<MedicamentoPacienteDto> prescribir(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody MedicamentoPacienteRequest request) {
@@ -34,10 +33,8 @@ public class MedicamentoPacienteControlador {
                 .flatMap(medicoId -> servicio.prescribir(medicoId, request));
     }
 
-    // ENFERMERO marca que ya administró una toma específica
-    // PATCH /api/medicamentos-paciente/{id}/administrar
     @PatchMapping("/{id}/administrar")
-    @PreAuthorize("hasRole('ENFERMERO')")
+    @PreAuthorize("hasAuthority('ROLE_ENFERMERO')")
     public Mono<MedicamentoPacienteDto> administrar(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails,
@@ -47,46 +44,43 @@ public class MedicamentoPacienteControlador {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO', 'ROLE_COORDINADOR')")
     public Flux<MedicamentoPacienteDto> findAll() {
         return servicio.findAll();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO', 'ROLE_ENFERMERO', 'ROLE_COORDINADOR')")
     public Mono<MedicamentoPacienteDto> findById(@PathVariable String id) {
         return servicio.findById(id);
     }
 
     @GetMapping("/paciente/{pacienteId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO', 'ROLE_ENFERMERO', 'ROLE_COORDINADOR')")
     public Flux<MedicamentoPacienteDto> findByPaciente(@PathVariable String pacienteId) {
         return servicio.findByPaciente(pacienteId);
     }
 
     @GetMapping("/paciente/{pacienteId}/activos")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
-    public Flux<MedicamentoPacienteDto> findByPacienteActivos(
-            @PathVariable String pacienteId) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO', 'ROLE_ENFERMERO', 'ROLE_COORDINADOR')")
+    public Flux<MedicamentoPacienteDto> findByPacienteActivos(@PathVariable String pacienteId) {
         return servicio.findByPacienteActivos(pacienteId);
     }
 
-    // Tomas que aún no se han administrado de un paciente
     @GetMapping("/paciente/{pacienteId}/pendientes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERO', 'COORDINADOR')")
-    public Flux<MedicamentoPacienteDto> findPendientesPorPaciente(
-            @PathVariable String pacienteId) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO', 'ROLE_ENFERMERO', 'ROLE_COORDINADOR')")
+    public Flux<MedicamentoPacienteDto> findPendientesPorPaciente(@PathVariable String pacienteId) {
         return servicio.findPendientesPorPaciente(pacienteId);
     }
 
     @GetMapping("/medico/{medicoId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'COORDINADOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO', 'ROLE_COORDINADOR')")
     public Flux<MedicamentoPacienteDto> findByMedico(@PathVariable String medicoId) {
         return servicio.findByMedico(medicoId);
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MEDICO')")
     public Mono<MedicamentoPacienteDto> cambiarEstado(
             @PathVariable String id,
             @RequestParam String estado) {
@@ -95,7 +89,7 @@ public class MedicamentoPacienteControlador {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Mono<Void> eliminar(@PathVariable String id) {
         return servicio.eliminar(id);
     }
